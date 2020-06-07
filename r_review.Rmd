@@ -1,0 +1,144 @@
+---
+title: "R Review"
+output: html_notebook
+---
+
+For this review, we'll be working with dispatch data from the Lincoln Police Department. You can find the data online here: [http://opendata.lincoln.ne.gov/datasets/lpd-dispatch-records](http://opendata.lincoln.ne.gov/datasets/lpd-dispatch-records).
+
+Use the Download menu to select a csv download.
+
+Then move the data file you downloaded into your project folder.
+
+### Load packages
+
+Load the tidyverse, janitor and lubridate packages.
+
+```{r}
+
+```
+
+### Load data
+
+Load your data into an object called 'dispatches'.
+
+```{r}
+
+```
+
+#### Fix column names
+
+Use janitor to make all column names comply with R preferred style - all lowercase and underscores between words.
+
+```{r}
+
+```
+
+
+### Analysis questions
+
+#### Datatypes
+
+Look at the documentation for the data. Do all the columns appear to be formatted correctly?
+
+Use lubridate to change the RPT_Date column to ymd format.
+
+```{r}
+
+```
+
+Find the 13 rows that failed to parse. Why?
+
+How many cases are in the data? How many unique cases?
+
+```{r}
+
+```
+
+#### Arranging
+
+What are the oldest and most recent cases in the data?
+
+```{r}
+
+```
+
+#### Filtering
+
+Create a dataframe called 'missing' with just missing persons cases in it.
+
+```{r}
+
+```
+
+Use the str_detect function to find all the cases that mention O Street in the address.
+
+```{r}
+
+```
+
+#### Counting
+
+Use the count() function to find the number of dispatches to each neighborhood. 
+
+```{r}
+
+```
+
+Which neighborhood appears the most in the data?
+
+Do you see any limitations of this data when we are counting by neighborhood?
+
+#### Mutating
+
+Create a new column called 'year' that includes just the year from date_fixed.
+
+```{r}
+
+```
+
+Use the case_when function to create a new categorical variable dividing the rpt_time column into the 24 hours of the day. Be careful to make sure that each time fits into only one value of the new variable.
+
+What hour of the day sees the most police action?
+
+#### Grouping and summarizing 
+
+How many drug-related dispatches occurred in each year of the data?
+
+```{r}
+
+```
+
+Create a new column called month. Then using group_by and summarize, find the maximum, minimum and average number of dispatches per month.
+
+```{r}
+
+```
+
+
+#### Percent change
+
+What was the percent change in total number of dispatches from 2018 to 2019?
+
+```{r}
+
+```
+
+
+#### Line charts
+
+Using ggplot, create a line chart of the number of cases per month and year. Choose an appropriate color for the line, add a title and labels and a choose a theme.
+
+```{r}
+
+```
+
+What do you observe about the yearly pattern of police dispatches? Why do you suppose that is?
+
+#### Column charts
+
+Using ggplot, create a column chart that shows the five most common categories in the cfs_legend column. Apply appropriate design decisions to your chart.
+
+```{r}
+
+```
+
