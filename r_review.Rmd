@@ -14,7 +14,9 @@ Then move the data file you downloaded into your project folder.
 Load the tidyverse, janitor and lubridate packages.
 
 ```{r}
-
+library(tidyverse)
+library(janitor)
+library(lubridate)
 ```
 
 ### Load data
@@ -22,7 +24,7 @@ Load the tidyverse, janitor and lubridate packages.
 Load your data into an object called 'dispatches'.
 
 ```{r}
-
+lps_dispatch <- read_csv("LPD_Dispatch_Records.csv")
 ```
 
 #### Fix column names
@@ -30,9 +32,8 @@ Load your data into an object called 'dispatches'.
 Use janitor to make all column names comply with R preferred style - all lowercase and underscores between words.
 
 ```{r}
-
+lps_dispatch <- lps_dispatch %>% clean_names()
 ```
-
 
 ### Analysis questions
 
@@ -43,7 +44,11 @@ Look at the documentation for the data. Do all the columns appear to be formatte
 Use lubridate to change the RPT_Date column to ymd format.
 
 ```{r}
+dispatch <- lps_dispatch %>% mutate(
+    CleanDate = ymd(rpt_date)
+)
 
+head(dispatch)
 ```
 
 Find the 13 rows that failed to parse. Why?
@@ -51,29 +56,57 @@ Find the 13 rows that failed to parse. Why?
 How many cases are in the data? How many unique cases?
 
 ```{r}
-
+dispatch %>% arrange(rpt_date)
 ```
+
+There are 13 cases that have a date of "0." Nice, LPD. So, that would be why.
+
+```{r}
+dispatch %>%
+  summarise(
+    case = n()
+    )
+```
+It appears there are 400,480 cases in this csv file. However, those same 13 - that didn't have dates - also don't have cases. 
+
+```{r}
+dispatch %>%
+  group_by(case) %>%
+  summarise(
+    case = n()
+  )
+```
+There are 400,459 unique cases. There is probably a better way to get that answer, but it works, I think. 
 
 #### Arranging
 
 What are the oldest and most recent cases in the data?
 
 ```{r}
-
+dispatch %>%
+  arrange(CleanDate)
 ```
+
+Oldest: January 1, 2017
+Newest: June 6, 2020
 
 #### Filtering
 
 Create a dataframe called 'missing' with just missing persons cases in it.
 
 ```{r}
-
+dispatch %>% mutate(
+  missing = sum(cfs_legend == "MISSING PERSON")
+)
 ```
+
+Ok, there are 7,921 missing persons in this data.
 
 Use the str_detect function to find all the cases that mention O Street in the address.
 
 ```{r}
-
+dispatch %>%
+  filter(str_detect(block_address, "O ST", negate = FALSE))
 ```
 
 #### Counting
@@ -81,64 +114,212 @@ Use the str_detect function to find all the cases that mention O Street in the a
 Use the count() function to find the number of dispatches to each neighborhood. 
 
 ```{r}
-
+dispatch %>%
+  group_by(neighbor) %>%
+  summarise(
+    count = n()
+  ) %>% arrange(desc(count))
 ```
 
 Which neighborhood appears the most in the data?
 
+Well, NA is the most dangerous neighborhood in Lincoln. Wow, who would have thought? 
+
 Do you see any limitations of this data when we are counting by neighborhood?
+
+Clearly, LPD forgot to assign some cases a neighborhood. Actually, they didnt' assign 133,001. That's a big problem. 
 
 #### Mutating
 
 Create a new column called 'year' that includes just the year from date_fixed.
 
 ```{r}
-
+dispatch <- dispatch %>%
+  mutate(
+    year = as.numeric(format(CleanDate,'%Y'))
+  )
 ```
 
 Use the case_when function to create a new categorical variable dividing the rpt_time column into the 24 hours of the day. Be careful to make sure that each time fits into only one value of the new variable.
 
+```{r}
+dispatch <- dispatch %>%
+  mutate(
+    hour_of_day = case_when(
+      as.numeric(rpt_time) >= 0 & as.numeric(rpt_time) <= 59 ~ 0,
+      as.numeric(rpt_time) >= 100 & as.numeric(rpt_time) <= 159 ~ 1,
+      as.numeric(rpt_time) >= 200 & as.numeric(rpt_time) <= 259 ~ 2,
+      as.numeric(rpt_time) >= 300 & as.numeric(rpt_time) <= 359 ~ 3,
+      as.numeric(rpt_time) >= 400 & as.numeric(rpt_time) <= 459 ~ 4,
+      as.numeric(rpt_time) >= 500 & as.numeric(rpt_time) <= 559 ~ 5,
+      as.numeric(rpt_time) >= 600 & as.numeric(rpt_time) <= 659 ~ 6,
+      as.numeric(rpt_time) >= 700 & as.numeric(rpt_time) <= 759 ~ 7,
+      as.numeric(rpt_time) >= 800 & as.numeric(rpt_time) <= 859 ~ 8,
+      as.numeric(rpt_time) >= 900 & as.numeric(rpt_time) <= 959 ~ 9,
+      as.numeric(rpt_time) >= 1000 & as.numeric(rpt_time) <= 1059 ~ 10,
+      as.numeric(rpt_time) >= 1100 & as.numeric(rpt_time) <= 1159 ~ 11,
+      as.numeric(rpt_time) >= 1200 & as.numeric(rpt_time) <= 1259 ~ 12,
+      as.numeric(rpt_time) >= 1300 & as.numeric(rpt_time) <= 1359 ~ 13,
+      as.numeric(rpt_time) >= 1400 & as.numeric(rpt_time) <= 1459 ~ 14,
+      as.numeric(rpt_time) >= 1500 & as.numeric(rpt_time) <= 1559 ~ 15,
+      as.numeric(rpt_time) >= 1600 & as.numeric(rpt_time) <= 1659 ~ 16,
+      as.numeric(rpt_time) >= 1700 & as.numeric(rpt_time) <= 1759 ~ 17,
+      as.numeric(rpt_time) >= 1800 & as.numeric(rpt_time) <= 1859 ~ 18,
+      as.numeric(rpt_time) >= 1900 & as.numeric(rpt_time) <= 1959 ~ 19,
+      as.numeric(rpt_time) >= 2000 & as.numeric(rpt_time) <= 2059 ~ 20,
+      as.numeric(rpt_time) >= 2100 & as.numeric(rpt_time) <= 2159 ~ 21,
+      as.numeric(rpt_time) >= 2200 & as.numeric(rpt_time) <= 2259 ~ 22,
+      as.numeric(rpt_time) >= 2300 & as.numeric(rpt_time) <= 2359 ~ 23,
+      )
+  )
+
+#case_when(
+  #x %% 35 == 0 ~ "fizz buzz",
+  #x %% 5 == 0 ~ "fizz",
+  #x %% 7 == 0 ~ "buzz",
+  #TRUE ~ as.character(x)
+
+```
+
+This is what I was rocking before. A tad more effecient. 
+
+```{r}
+dispatch <- dispatch %>%
+  mutate(
+    hour_of_day = substr(rpt_time, 1, 2)
+  )
+```
+
 What hour of the day sees the most police action?
+
+```{r}
+dispatch %>%
+  group_by(hour_of_day) %>%
+  summarise(
+    total_per_hour = n()
+  ) %>% arrange(desc(total_per_hour))
+```
+
+It appears that 4-6 p.m. is not the time to be outside in Lincoln. 
 
 #### Grouping and summarizing 
 
 How many drug-related dispatches occurred in each year of the data?
 
 ```{r}
-
+dispatch %>% 
+  filter(str_detect(cfs_legend, "DRUGS", negate = FALSE)) %>%
+  group_by(year, cfs_legend) %>%
+  summarise(
+    count = n()
+  )
 ```
 
 Create a new column called month. Then using group_by and summarize, find the maximum, minimum and average number of dispatches per month.
 
 ```{r}
-
+dispatch <- dispatch %>%
+  mutate(
+    month = as.numeric(format(CleanDate,'%m'))
+  )
+```
+```{r}
+dispatch %>% 
+  count(month) %>% 
+  arrange(desc(n))
+```
+```{r}
+dispatch %>%
+  group_by(month) %>%
+  summarise(
+    total_per_month = n()
+  ) %>% arrange(desc(total_per_month))
+```
+```{r}
+month_dispatch <- dispatch %>%
+  group_by(month, year) %>%
+  summarise(
+    per_month = n()
+  )
+```
+```{r}
+summary(month_dispatch)
 ```
 
+```{r}
+month_dispatch %>% ungroup() %>% summarize(min(per_month), max(per_month), mean(per_month))
+```
 
 #### Percent change
 
 What was the percent change in total number of dispatches from 2018 to 2019?
 
 ```{r}
-
+by_year <- dispatch %>%
+  group_by(year) %>%
+  summarise(
+    yearly_total = n()
+  )
+```
+```{r}
+by_year %>%
+  mutate(
+    change = ((2019 - 2018)/2018)*100
+  )
 ```
 
+That's a poor way to do it, but it got the correct answer. There was a 0.05% change from 2018 to 2019. 
 
 #### Line charts
 
 Using ggplot, create a line chart of the number of cases per month and year. Choose an appropriate color for the line, add a title and labels and a choose a theme.
 
 ```{r}
-
+dispatch %>% group_by(CleanDate) %>% summarize(total=n()) %>% ggplot() + geom_line(aes(x=CleanDate, y=total)) +
+  labs(x="Date", y="LPD Dispatch Calls", title= "Lincoln Police Department Dispatches Since Jan. 2017", subtitle= "The warmer the weather -- which here is the middle part of the year -- the more dispatch calls.", caption="Source: Lincoln Police Department | Graphic: Will Bauer") + 
+  theme_minimal() + theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 8), 
+    plot.subtitle = element_text(size=10)
+  ) +
+  ggsave("LPDdispatch.png", width = 8, height = 4)
 ```
 
 What do you observe about the yearly pattern of police dispatches? Why do you suppose that is?
+
+The warmer the weather, the - probably - more crime, and, therefore, more 911 calls. 
 
 #### Column charts
 
 Using ggplot, create a column chart that shows the five most common categories in the cfs_legend column. Apply appropriate design decisions to your chart.
 
 ```{r}
-
+type <- dispatch %>%
+  group_by(cfs_legend) %>%
+  summarise(total = n()) %>%
+  arrange(desc(total)) %>%
+  filter(total >= 22193)
+```
+```{r}
+library(scales)
 ```
 
+```{r}
+ggplot(type, aes(x=reorder(cfs_legend, -`total`), weight=`total`)) + geom_bar()
+```
+
+Well, that looks like garbage. Let me play around with this. 
+
+```{r}
+ggplot(type, aes(x=reorder(cfs_legend, -`total`), weight=`total`)) + 
+  geom_bar() + 
+  scale_y_continuous(labels=comma) + 
+  labs(x="", y="", title="Lincoln Police's Five Most Common Reasons for Dispatch Since 2017", subtitle= "Maybe someone should ask LPD what other means because there is a lot of other since 2017.", caption="Source: Lincoln Police Department | Graphic: Will Bauer") + 
+  coord_flip() + 
+  theme_minimal() + theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 8), 
+    plot.subtitle = element_text(size=10)
+  ) +
+  ggsave("5Dispatches.png", width = 8, height = 4)
+```
